@@ -48,7 +48,6 @@ func getComponents(c echo.Context) error {
 	defer rows.Close()
 
 	// Process the rows and return the data as JSON
-	// For simplicity, let's assume we have a struct ComponentData to hold the data
 	var componentData []ComponentData
 	for rows.Next() {
 		var data ComponentData

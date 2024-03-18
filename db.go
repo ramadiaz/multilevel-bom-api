@@ -18,15 +18,14 @@ func getDB() (*sql.DB, error) {
 }
 
 type ComponentData struct {
-    ComponentID   string   `json:"component_id"`
-    ComponentDesc *string  `json:"component_desc"`
-    ComponentInv  *string   `json:"component_inv"`
-    ParentID      *string  `json:"parent_id"`
-    ParentDesc    *string  `json:"parent_desc"`
-    ParentInv     *string  `json:"parent_inv"`
-    Net           *float64 `json:"net"`
+	ComponentID   string   `json:"component_id"`
+	ComponentDesc *string  `json:"component_desc"`
+	ComponentInv  *string  `json:"component_inv"`
+	ParentID      *string  `json:"parent_id"`
+	ParentDesc    *string  `json:"parent_desc"`
+	ParentInv     *string  `json:"parent_inv"`
+	Net           *float64 `json:"net"`
 }
-
 
 func getComponents(c echo.Context) error {
 	db, err := getDB()
@@ -54,12 +53,12 @@ func getComponents(c echo.Context) error {
 		var componentDesc, parentDesc sql.NullString
 		var parentInv sql.NullString
 		var net sql.NullFloat64
-	
+
 		err := rows.Scan(&data.ComponentID, &componentDesc, &data.ComponentInv, &data.ParentID, &parentDesc, &parentInv, &net)
 		if err != nil {
 			log.Fatal(err)
 		}
-	
+
 		if componentDesc.Valid {
 			data.ComponentDesc = &componentDesc.String
 		}
@@ -72,10 +71,36 @@ func getComponents(c echo.Context) error {
 		if net.Valid {
 			data.Net = &net.Float64
 		}
-	
+
 		componentData = append(componentData, data)
 	}
-	
 
 	return c.JSON(http.StatusOK, componentData)
+}
+
+func pushComponents(c echo.Context) error {
+	db, err := getDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	var newItem ComponentData
+	err = c.Bind(&newItem)
+	if err != nil {
+		return err
+	}
+
+	result, err := db.Exec("INSERT INTO components (id, [desc], inv) VALUES (@p1, @p2, @p3)", newItem.ComponentID, newItem.ComponentDesc, newItem.ComponentInv)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id, _ := result.LastInsertId()
+
+	response := map[string]interface{}{
+		"id": id,
+	}
+	return c.JSON(http.StatusOK, response)
 }

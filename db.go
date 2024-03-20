@@ -104,3 +104,31 @@ func pushComponents(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, response)
 }
+
+func pushComponentParents(c echo.Context) error {
+	db, err := getDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	var newItem ComponentData
+	err = c.Bind(&newItem)
+	if err != nil {
+		return err
+	}
+
+	result, err := db.Exec(
+		"INSERT INTO component_parents (component_id, parent_id, net) VALUES (@p1, @p2, @p3)", newItem.ComponentID, newItem.ParentID, newItem.Net)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id, _ := result.LastInsertId()
+
+	response := map[string]interface{}{
+		"id": id,
+	}
+	return c.JSON(http.StatusOK, response)
+}
